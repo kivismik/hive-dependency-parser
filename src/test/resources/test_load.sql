@@ -1,0 +1,1 @@
+load data local inpath '/some/txt' overwrite into table p.a partition (x = 's')
