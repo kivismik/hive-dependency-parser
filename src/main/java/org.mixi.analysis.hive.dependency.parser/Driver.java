@@ -1,10 +1,12 @@
 package org.mixi.analysis.hive.dependency.parser;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore;
 import org.apache.hadoop.hive.ql.parse.ASTNode;
 import org.apache.hadoop.hive.ql.parse.ParseDriver;
 import org.apache.hadoop.hive.ql.parse.ParseException;
 import org.apache.hadoop.hive.ql.parse.ParseUtils;
+import org.codehaus.jettison.json.JSONException;
 
 import java.io.*;
 
@@ -90,11 +92,13 @@ public class Driver {
         }
     }
 
-    public static void run(String[] args) throws ParseException {
+    public static Dependency run(String path) throws ParseException {
+        return processFile(path);
     }
 
-    public static void main(String[] args) throws ParseException {
-        run(args);
+    public static void main(String[] args) throws ParseException, JSONException {
+        Dependency d = run(args[0]);
+        System.out.println(d.toJson());
     }
 
     private static String getFirstCmd(String cmd, int length) {

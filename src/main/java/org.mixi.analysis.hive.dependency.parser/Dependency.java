@@ -1,5 +1,9 @@
 package org.mixi.analysis.hive.dependency.parser;
 
+import org.codehaus.jettison.json.JSONArray;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
+
 import java.util.ArrayList;
 
 /**
@@ -15,8 +19,6 @@ public class Dependency {
     }
 
     public ArrayList<String> getDestinations() {
-
-
         return destinations;
     }
 
@@ -31,5 +33,17 @@ public class Dependency {
         sources.addAll(dependency.getSources());
         destinations.addAll(dependency.getDestinations());
         return this;
+    }
+
+    public String toJson() throws JSONException {
+        JSONObject json = new JSONObject();
+
+        JSONArray sources      = new JSONArray(this.sources);
+        JSONArray destinations = new JSONArray(this.destinations);
+
+        json.put("sources"     , sources);
+        json.put("destinations", destinations);
+
+        return json.toString();
     }
 }
