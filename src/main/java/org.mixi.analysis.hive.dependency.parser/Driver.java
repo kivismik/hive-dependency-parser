@@ -1,7 +1,9 @@
 package org.mixi.analysis.hive.dependency.parser;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore;
+import org.apache.hadoop.hive.ql.Context;
 import org.apache.hadoop.hive.ql.parse.ASTNode;
 import org.apache.hadoop.hive.ql.parse.ParseDriver;
 import org.apache.hadoop.hive.ql.parse.ParseException;
@@ -16,7 +18,7 @@ import java.io.*;
 public class Driver {
     private static Logger logger = new Logger();
 
-    public static Dependency processFile(String path) {
+    public static Dependency processFile(String path) throws IOException {
         File file = new File(path);
         String line;
         StringBuilder qsb = new StringBuilder();
@@ -32,13 +34,13 @@ public class Driver {
                 }
             }
         } catch (Exception e) {
-            logger.error("File: " + path + " could not be read.", e);
+            logger.error("File: " + path + " could not be rtead.", e);
         }
 
         return processLine(qsb.toString());
     }
 
-    public static Dependency processLine(String line) {
+    public static Dependency processLine(String line) throws IOException {
         Dependency n, ret = new Dependency();
 
         String command = "";
@@ -62,7 +64,7 @@ public class Driver {
 
         return ret;
     }
-    public static Dependency processCmd(String cmd) {
+    public static Dependency processCmd(String cmd) throws IOException {
         String cmd_trimmed = cmd.trim();
         String[] tokens = cmd_trimmed.split("\\s");
 
@@ -78,10 +80,18 @@ public class Driver {
             }
         } else {
             try {
+                Configuration cfg = new org.apache.hadoop.conf.Configuration();
+                if (cfg.get("_hive.hdfs.session.path") == null) {
+                    cfg.set("_hive.hdfs.session.path", "/test");
+                }
+                if (cfg.get("_hive.local.session.path") == null) {
+                    cfg.set("_hive.local.session.path", "/tmp");
+                }
+                Context ctx = new org.apache.hadoop.hive.ql.Context(cfg);
                 ParseDriver driver = new ParseDriver();
                 ASTNode tree;
 
-                tree = driver.parse(cmd);
+                tree = driver.parse(cmd, ctx);
                 tree = ParseUtils.findRootNonNullToken(tree);
                 return TreeParser.parse(tree);
 
@@ -92,11 +102,11 @@ public class Driver {
         }
     }
 
-    public static Dependency run(String path) throws ParseException {
+    public static Dependency run(String path) throws ParseException, IOException {
         return processFile(path);
     }
 
-    public static void main(String[] args) throws ParseException, JSONException {
+    public static void main(String[] args) throws ParseException, JSONException, IOException {
         Dependency d = run(args[0]);
         System.out.println(d.toJson());
     }
